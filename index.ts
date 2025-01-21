@@ -30,14 +30,21 @@ async function main() {
   const currentIsoDate = new Date().toISOString();
   const currentDateString = currentIsoDate.substring(0, currentIsoDate.indexOf('T'));
   let end_date = currentDateString;
+  console.log(`Pulling data up to ${end_date}`);
 
   // Get the current streak from the database
-  console.log(`typeof end_date ${typeof end_date}`);
-  console.log(`Pulling data up to ${end_date}`);
-  
   const client: mongoDB.MongoClient = new mongoDB.MongoClient(process.env.MONGODB_URI as string);
-  await client.connect();
-  
+  try {
+    await client.connect();
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error("Failed to connect to the database.", error.message);
+    } else {
+      console.error("Failed to connect to the database.", error);
+    }
+    return;
+  }
+
   const db: mongoDB.Db = client.db('streak');
   const collection: mongoDB.Collection = db.collection('streak');
   let streak = await collection.findOne();
@@ -45,7 +52,6 @@ async function main() {
   if(!streak){
     return;
   }
-
   // Get the next 50 games for the current belt holder, starting on the day they won the belt
   // We're picking 50 because that's the max number of records returned via the API, and also
   // the NBA's longest win streak is 33 games so this should return a loss.
@@ -122,7 +128,6 @@ async function main() {
     console.log('No updates posted');
   }
   client.close();
-  console.log('\n');
 }
 
 main();

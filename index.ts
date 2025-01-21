@@ -32,6 +32,7 @@ async function main() {
   let end_date = currentDateString;
 
   // Get the current streak from the database
+  console.log(`typeof end_date ${end_date}`);
   console.log(`Pulling data up to ${end_date}`);
   
   const client: mongoDB.MongoClient = new mongoDB.MongoClient(process.env.MONGODB_URI as string);

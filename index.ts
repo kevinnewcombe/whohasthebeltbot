@@ -115,7 +115,7 @@ async function main() {
   let msg = '';
   if(!has_lost && wins_to_date > streak.number_of_games){ 
     // if the streak has one more game than it did the last time we posted
-    msg = `The ${streak.full_name} beat the ${last_opponent} to retain the belt. ${(wins_to_date + 1)} game win streak.`;
+    msg = `The ${streak.full_name} beat the ${last_opponent} to retain the belt (${(wins_to_date + 1)} game win streak).`;
     streak.number_of_games = wins_to_date;
   }else if(has_lost){
     // If the belt has changed hands
@@ -126,7 +126,7 @@ async function main() {
     const result = await collection.updateOne({_id: streak._id}, { $set: streak });
     if(result.acknowledged){
       if(process.env.POST_TO_BLUESKY === "1"){
-        console.log(`Message posted to Bluesky on ${end_date}: ${msg}`);
+        console.log(`Message posted to Bluesky on ${end_date}: ${msg}`);git status
         await agent.login({ identifier: process.env.BLUESKY_USERNAME!, password: process.env.BLUESKY_PASSWORD!})
         await agent.post({
           text: msg

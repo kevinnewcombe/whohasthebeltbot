@@ -126,7 +126,7 @@ async function main() {
     const result = await collection.updateOne({_id: streak._id}, { $set: streak });
     if(result.acknowledged){
       if(process.env.POST_TO_BLUESKY === "1"){
-        console.log(`Message posted to Bluesky on ${end_date}: ${msg}`);git status
+        console.log(`Message posted to Bluesky on ${end_date}: ${msg}`);
         await agent.login({ identifier: process.env.BLUESKY_USERNAME!, password: process.env.BLUESKY_PASSWORD!})
         await agent.post({
           text: msg

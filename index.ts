@@ -115,7 +115,7 @@ async function main() {
   let msg = '';
   if(!has_lost && wins_to_date > streak.number_of_games){ 
     // if the streak has one more game than it did the last time we posted
-    msg = `The ${streak.full_name} beat the ${last_opponent} to retain the belt (${(wins_to_date + 1)} game win streak).`;
+    msg = `The ${streak.full_name} have beaten the ${last_opponent} to retain the belt (${(wins_to_date + 1)} game win streak).`;
     streak.number_of_games = wins_to_date;
   }else if(has_lost){
     // If the belt has changed hands

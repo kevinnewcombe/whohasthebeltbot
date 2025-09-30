@@ -9,10 +9,10 @@ The championship belt (not an actual thing) is based around the idea of the winn
 Every hour a script runs and pulls a document from MongoDB containing data about the last time the belt was contested. The specific fields are
 * `full_name` : the human-readable name of the defending team
 * `number_of_games` : the number of games they played with the belt
-* `start_date` : the date they took they belt in `YYYY-MM-DD` format
+* `last_update` : the last time we checked for new finished games, in `YYYY-MM-DD`
 * `team_id` : the ID of the team used for making API calls
 
-From here it makes a call to the Ball Don't Lie API, getting all the games (maximum 50) for the team since the streak started and checking to see if either they've lost since then, or the number of wins has increased. If so, a message is posted to Bluesky along the lines of "Team X has beat Y to [hold on to / take] the belt."
+From here it makes a call to the Ball Don't Lie API, getting today's game (if one exists) for the defending team. If a game has finished since we last checked the API, it will post a message to Bluesky either saying that the streak has either been extended or changed hands.
 
 The script runs every hour as set by `const job = new CronJob("0 * * * *", main);` in `index.ts`
 
@@ -20,10 +20,10 @@ The script runs every hour as set by `const job = new CronJob("0 * * * *", main)
 * Create a MongoDB collection named 'streak' inside a database named 'streak'. Add the following record as a starting point:
 ```
   {
-    "full_name": "Cleveland Cavaliers",
-    "start_date": "2024-12-23",
-    "team_id": 6,
-    "number_of_games": 5
+    "full_name": "Oklahoma City Thunder",
+    "last_update": "2025-10-01",
+    "number_of_games": 0,
+    "team_id": 21
   }
 ```
 you'll likely need to run this script a few times in order to catch up to the current date.

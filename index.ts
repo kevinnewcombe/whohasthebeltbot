@@ -169,6 +169,6 @@ async function main() {
 
 main();
 
-const job = new CronJob("0 * * * *", main);
+const job = new CronJob("*/15 * * * *", main);
 
 job.start();

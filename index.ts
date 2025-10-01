@@ -15,11 +15,13 @@ if (
   throw new Error("Missing environment variables.");
 }
 
-interface team {
+type Team = {
   full_name: String;
   team_id?: Number;
   score: Number;
 }
+
+type TeamLocation = 'home_team' | 'visitor_team';
 
 // Ball Don't Lie API. Use this to grab the results of games
 const api = new BalldontlieAPI({ apiKey: process.env.BDL_API_KEY });
@@ -30,9 +32,9 @@ const agent = new BskyAgent({
 });
 
 async function main() {
-  console.log(`\n\n---------\n\n`);
+  console.log(`\n---------\n`);
   const iso_date = new Date().toISOString();
-  const date = iso_date.substring(0, iso_date.indexOf('T'));
+  const today = iso_date.substring(0, iso_date.indexOf('T'));
 
   /**
    * Get the current streak from the database
@@ -48,6 +50,7 @@ async function main() {
     } else {
       console.error("🚨 Failed to connect to the database.\n", error);
     }
+    
     return;
   }
 
@@ -56,73 +59,73 @@ async function main() {
   let streak = await collection.findOne();
   if (!streak) {
     console.error("🚨 Streak not found");
+    client.close();
     return;
   }
 
-  console.log(`Pulling games for ${date}`);
-  if (streak.last_update == date) {
+  if (streak.last_update == today) {
     console.log("No more games today");
+    client.close();
     return;
   }
 
-  /**
-   * Get the next game that we _haven't_ recorded
-   */
+  let start_date:string|Date = new Date(streak.last_update); // Get the day after the last time the streak was updated
+  start_date = new Date(start_date.getTime() + 24*60*60*1000).toISOString();
+  start_date =  start_date.substring(0, start_date.indexOf('T'));
+
+  console.log(`Last update: ${streak.last_update}\nPulling games from ${start_date} to ${today}\n`);
+
+  // Get all the regular season games for the current belt holder between the day after the streak was last updated and today
   let games: NBAGame[] = [];
   try {
      const data = await api.nba.getGames({
-      start_date: date,
-      end_date: date,
-      per_page: 1,
+      start_date,
+      end_date: today,
+      postseason: false,
       team_ids: [streak.team_id],
     });
     games = data.data;
   }catch(error){
     console.error('🚨', error);
+    client.close();
     return;
   };
 
   if (!games.length) {
-    console.log(`There are no ${streak.full_name} games today`);
-    if (streak) {
-      await collection.updateOne({ _id: streak._id }, { $set: { 'last_update': date }});
-    }
+    console.log(`There are no unfinished ${streak.full_name} games.`);
+    client.close();
     return;
   }
 
-  // Filter out any in-progress games
+  // Filter out any games that haven't finished and exit if that leaves us with nothing
   games = games.filter((game: NBAGame) => game.status === "Final");
   if (!games.length) {
-    // If today's game is still in progress, exit
     console.log("There are unfinished games today");
+    client.close();
     return;
   }  // Otherwise, today's game has ended but hasn't been counted, continue
 
-  const game = games[0];
 
-  let def: team | null = null;
-  let opp: team | null = null;
-  if (game.home_team.full_name === streak.full_name) {
-    def = { full_name: game.home_team.full_name, score: game.home_team_score };
-    opp = {
-      full_name: game.visitor_team.full_name,
-      score: game.visitor_team_score,
-      team_id: game.visitor_team.id,
-    };
-  } else {
-    opp = {
-      full_name: game.home_team.full_name,
-      score: game.home_team_score,
-      team_id: game.home_team.id,
-    };
-    def = {
-      full_name: game.visitor_team.full_name,
-      score: game.visitor_team_score,
-    };
-  }
-  let has_lost = false;
+  const game = games[0]; // Get the first unfinished game
+
+  // Get the belt holder and challenger names
+  const defTeamLocation:TeamLocation = (game.home_team.full_name === streak.full_name) ? 'home_team' : 'visitor_team';
+  const oppTeamLocation:TeamLocation = (game.home_team.full_name === streak.full_name) ? 'visitor_team' : 'home_team';
+
+  const def:Team = { 
+    full_name: game[defTeamLocation].full_name, 
+    score: game[`${defTeamLocation}_score`] 
+  };
+
+  const opp:Team = { 
+    full_name: game[oppTeamLocation].full_name, 
+    score: game[`${oppTeamLocation}_score`], 
+    team_id: game[oppTeamLocation].id  
+  };
+
+
   if (opp.score > def.score) {
-    has_lost = true;
+    // The belt holder lost, start a new streak
     streak = {
       ...streak,
       full_name: opp.full_name,
@@ -130,6 +133,7 @@ async function main() {
       number_of_games: 0
     };
   } else {
+    // The streak has been extended
     streak = {
       ...streak,
       number_of_games: streak.number_of_games + 1,
@@ -138,10 +142,10 @@ async function main() {
 
   streak = {
     ...streak,
-    last_update: date
+    last_update: game.date
   };
 
-  const msg = (has_lost) ? `The ${streak.full_name} have taken the belt from the ${def.full_name}.` : `The ${streak.full_name} have beaten the ${opp.full_name} to retain the belt (${streak.number_of_games} game win streak).`;
+  const msg = (opp.score > def.score) ? `The ${streak.full_name} have taken the belt from the ${def.full_name}.` : `The ${streak.full_name} have beaten the ${opp.full_name} to retain the belt (${streak.number_of_games} game${streak.number_of_games >1 ? 's' : ''}).`;
 
   const result = await collection.updateOne(
     { _id: streak._id },
@@ -149,7 +153,7 @@ async function main() {
   );
   if (result.acknowledged) {
     if (process.env.POST_TO_BLUESKY === "1") {
-      console.log(`Message posted to Bluesky on ${date}: ${msg}`);
+      console.log(`Message posted to Bluesky for ${game.date}: ${msg}`);
       await agent.login({
         identifier: process.env.BLUESKY_USERNAME!,
         password: process.env.BLUESKY_PASSWORD!,
@@ -158,17 +162,17 @@ async function main() {
         text: msg,
       });
     } else {
-      console.log(`Message logged on ${date}: ${msg}`);
+      console.log(`Message logged for ${game.date}: ${msg}`);
     }
   } else {
     console.log("🚨 Can't update the MongoDB database\n", result);
   }
+  /* */
   client.close();
 }
-
 
 main();
 
 const job = new CronJob("*/15 * * * *", main);
-
 job.start();
+

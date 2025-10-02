@@ -92,9 +92,23 @@ async function main() {
   };
 
   if (!games.length) {
+    
     console.log(`There are no unfinished ${streak.full_name} games.`);
-    client.close();
-    return;
+    if(streak.last_update !== today){
+      const result = await collection.updateOne(
+        { _id: streak._id },
+        { $set: {
+          last_update: today
+        } }
+      );
+      if (result.acknowledged) {
+        client.close();
+        return;
+      }
+    }else{
+      // client.close();
+      return;
+    }
   }
 
   // Filter out any games that haven't finished and exit if that leaves us with nothing

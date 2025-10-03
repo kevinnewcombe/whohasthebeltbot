@@ -73,7 +73,7 @@ async function main() {
   start_date = new Date(start_date.getTime() + 24*60*60*1000).toISOString();
   start_date =  start_date.substring(0, start_date.indexOf('T'));
 
-  console.log(`Last update: ${streak.last_update}\nPulling games from ${start_date} to ${today}\n`);
+  console.log(`Last update: ${streak.last_update}\nPulling games from ${start_date} to ${today}.`);
 
   // Get all the regular season games for the current belt holder between the day after the streak was last updated and today
   let games: NBAGame[] = [];
@@ -92,8 +92,7 @@ async function main() {
   };
 
   if (!games.length) {
-    
-    console.log(`There are no unfinished ${streak.full_name} games.`);
+    console.log(`There are no ${streak.full_name} games from ${start_date} to ${today}.`);
     if(streak.last_update !== today){
       const result = await collection.updateOne(
         { _id: streak._id },
@@ -114,7 +113,7 @@ async function main() {
   // Filter out any games that haven't finished and exit if that leaves us with nothing
   games = games.filter((game: NBAGame) => game.status === "Final");
   if (!games.length) {
-    console.log("There are unfinished games today");
+    console.log(`There are unfinished ${streak.full_name} games.`);
     client.close();
     return;
   }  // Otherwise, today's game has ended but hasn't been counted, continue

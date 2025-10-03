@@ -32,7 +32,6 @@ const agent = new BskyAgent({
 });
 
 async function main() {
-  console.log(`\n---------\n`);
   const iso_date = new Date().toISOString();
   const today = iso_date.substring(0, iso_date.indexOf('T'));
 
@@ -64,7 +63,7 @@ async function main() {
   }
 
   if (streak.last_update == today) {
-    console.log("No more games today");
+    console.log("No more games today.");
     client.close();
     return;
   }
@@ -113,7 +112,7 @@ async function main() {
   // Filter out any games that haven't finished and exit if that leaves us with nothing
   games = games.filter((game: NBAGame) => game.status === "Final");
   if (!games.length) {
-    console.log(`There are unfinished ${streak.full_name} games.`);
+    console.log(`There are no unfinished ${streak.full_name} games from ${start_date} to ${today}.`);
     client.close();
     return;
   }  // Otherwise, today's game has ended but hasn't been counted, continue
@@ -180,7 +179,6 @@ async function main() {
   } else {
     console.log("🚨 Can't update the MongoDB database\n", result);
   }
-  /* */
   client.close();
 }
 

@@ -129,7 +129,7 @@ async function main() {
     score: game[`${defTeamLocation}_score`] 
   };
 
-  const opp:Team = { 
+  let opp:Team = { 
     full_name: game[oppTeamLocation].full_name, 
     score: game[`${oppTeamLocation}_score`], 
     team_id: game[oppTeamLocation].id  
@@ -157,12 +157,37 @@ async function main() {
     last_update: game.date
   };
 
-  const msg = (opp.score > def.score) ? `The ${streak.full_name} have taken the belt from the ${def.full_name}.` : `The ${streak.full_name} have beaten the ${opp.full_name} to retain the belt (${streak.number_of_games} game${streak.number_of_games >1 ? 's' : ''}).`;
+
+  // Get the next game for whoever has the belt.
+  try {
+    const data = await api.nba.getGames({
+      start_date: today,
+      postseason: false,
+      team_ids: [streak.team_id],
+    });
+    games = data.data;
+  }catch(error){
+    console.error('🚨', error);
+    client.close();
+    return;
+  };
+  const next_date =  new Date(games[0].date).toLocaleString("en-US", { 
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long'
+  });
+
+
+
+  let msg = (opp.score > def.score) ? `The ${streak.full_name} have taken the belt from the ${def.full_name}.` : `The ${streak.full_name} have beaten the ${opp.full_name} to retain the belt (${streak.number_of_games} game${streak.number_of_games >1 ? 's' : ''}).`;
+  msg+= ` Next up: the ${(games[0].home_team.id === streak.team_id) ? games[0].visitor_team.full_name : games[0].home_team.full_name} on ${next_date}.`;
 
   const result = await collection.updateOne(
     { _id: streak._id },
     { $set: streak }
   );
+
+
   if (result.acknowledged) {
     if (process.env.POST_TO_BLUESKY === "1") {
       console.log(`Message posted to Bluesky for ${game.date}: ${msg}`);

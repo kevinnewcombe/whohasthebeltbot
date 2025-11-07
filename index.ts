@@ -174,7 +174,8 @@ async function main() {
   const next_date =  new Date(games[0].date).toLocaleString("en-US", { 
     weekday: 'long',
     day: 'numeric',
-    month: 'long'
+    month: 'long',
+    timeZone: 'UTC'
   });
 
 

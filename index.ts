@@ -181,7 +181,6 @@ async function main() {
 
 
   let msg = (opp.score > def.score) ? `The ${streak.full_name} have taken the belt from the ${def.full_name}.` : `The ${streak.full_name} have beaten the ${opp.full_name} to retain the belt (${streak.number_of_games} game${streak.number_of_games >1 ? 's' : ''}).`;
-  msg+= ` Next up: the ${(games[0].home_team.id === streak.team_id) ? games[0].visitor_team.full_name : games[0].home_team.full_name} on ${next_date}.`;
 
   const result = await collection.updateOne(
     { _id: streak._id },

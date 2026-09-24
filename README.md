@@ -30,3 +30,9 @@ you'll likely need to run this script a few times in order to catch up to the cu
 * Duplicate `.env.example` as `.env` and populate the values with Bluesky credentials, a Ball Don't Lie API key, and a MongoDB connection string.
 * Run `npm install`
 * All the logic is in `index.ts`. Run `npm run dev` to start the dev server or `npm run start` to compile the script and run it.
+
+## Possible future enhancements
+### The NBA Cup
+At one point, each Bluesky post mentioned the next game for the belt holders ("[Team A] have beaten [Team B] to [retain/take] the belt. Next up: [Team C] on [Date]."). There was an issue in the 2025 season where the belt entered the knockout rounds of the NBA Cup with the Knicks and after one game should have included something along the lines of "Next up: the winner of the Orlando/Miami quarterfinal", but instead mentioned the next regular season game for the Knicks. 
+
+Ideally, the "next up" line comes back, but we'd either need to either disable it during the NBA Cup, or make it play nicer with NBA Cup games, or omit those games entirely.

@@ -1,16 +1,16 @@
-# Who has the belt Bluesky bot
+# Who has the NBA Belt Bluesky bot
 A Bluesky bot that posts updates about who has the NBA Championship belt to [whohasthebelt.bsky.social](https://bsky.app/profile/whohasthebelt.bsky.social).
 
-Deploys from [Railway](https://railway.app/project/beda3e5a-d3fa-4faa-a030-dd1e18506caf/service/e0f1bd27-595e-455b-9f49-fc35396e7248?environmentId=af9f00cc-fe35-4d06-b394-c24974e49b14)
+Built with Typescript, Node.js, MongoDB and the Bluesky and [Ball Don't Lie](https://www.balldontlie.io/) APIs.
 
 ## How it works
-The championship belt (not an actual thing) is based around the idea of the winners of last season's NBA finals starting the current season with a championship belt. They have it until they lose a game, at which point it goes to the team that beat them and so on.
+The NBA Championship Belt (not an actual thing) is based around the idea of the winners of last season's NBA finals starting the current season with a championship belt. They have it until they lose a game, at which point it goes to the next team to beat them and so on.
 
 Every hour a script runs and pulls a document from MongoDB containing data about the last time the belt was contested. The specific fields are
 * `full_name` : the human-readable name of the defending team
 * `number_of_games` : the number of games they played with the belt
 * `last_update` : the last time we checked for new finished games, in `YYYY-MM-DD`
-* `team_id` : the ID of the team used for making API calls
+* `team_id` : the ID of the team (as it's used in the Ball Don't Lie API) used for making API calls
 
 From here it makes a call to the Ball Don't Lie API, getting today's game (if one exists) for the defending team. If a game has finished since we last checked the API, it will post a message to Bluesky either saying that the streak has either been extended or changed hands.
 
